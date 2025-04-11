@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -13,6 +14,17 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Association table for user-interests
+user_interest = db.Table('user_interest',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('interest_id', db.Integer, db.ForeignKey('interest.id'), primary_key=True)
+)
+
+class Interest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    category = db.Column(db.String(20))
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -20,8 +32,12 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20))  # 'mentee' or 'mentor'
     education = db.Column(db.String(200))
     skills = db.Column(db.String(200))
-    interests = db.Column(db.String(200))
-    guidelines_accepted = db.Column(db.Boolean, default=False)
+    interests = db.relationship('Interest', secondary=user_interest, backref='users')
+    bio = db.Column(db.Text)
+    company = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+    is_verified = db.Column(db.Boolean, default=False)
 
 class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,13 +67,37 @@ class Resource(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+def seed_interests():
+    default_interests = [
+        'Data Science', 'AI/ML', 'Web Development',
+        'Mobile Development', 'Cloud Computing', 'Cybersecurity',
+        'UI/UX Design', 'Project Management', 'Digital Marketing'
+    ]
+    for interest in default_interests:
+        if not Interest.query.filter_by(name=interest).first():
+            db.session.add(Interest(name=interest))
+    db.session.commit()
+
 # Create tables
 with app.app_context():
     db.create_all()
+    seed_interests()
+
+def calculate_match_percentage(mentee, mentor):
+    mentee_interests = {interest.id for interest in mentee.interests}
+    mentor_interests = {interest.id for interest in mentor.interests}
+    
+    common_interests = mentee_interests & mentor_interests
+    total_mentee_interests = len(mentee_interests)
+    
+    if total_mentee_interests == 0:
+        return 0
+    
+    return (len(common_interests) / total_mentee_interests) * 100
 
 @app.route('/')
 def home():
-    return redirect(url_for('login'))
+    return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -100,14 +140,50 @@ def register():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    all_interests = Interest.query.all()
+    
     if request.method == 'POST':
-        current_user.education = request.form['education']
-        current_user.skills = request.form['skills']
-        current_user.interests = request.form['interests']
+        if current_user.role == 'mentor':
+            current_user.education = request.form.get('education', '')
+            current_user.company = request.form.get('company', '')
+            current_user.bio = request.form.get('bio', '')
+        
+        current_user.skills = request.form.get('skills', '')
+        
+        selected_interest_ids = request.form.getlist('interests')
+        current_user.interests = Interest.query.filter(
+            Interest.id.in_(selected_interest_ids)
+        ).all()
+        
         db.session.commit()
+        flash('Profile updated successfully!')
+        
+        if current_user.role == 'mentee':
+            return redirect(url_for('matches'))
         return redirect(url_for('dashboard'))
     
-    return render_template('profile.html')
+    return render_template('profile.html', all_interests=all_interests)
+
+@app.route('/matches')
+@login_required
+def matches():
+    if current_user.role != 'mentee':
+        return redirect(url_for('dashboard'))
+    
+    mentors = User.query.filter_by(role='mentor').all()
+    
+    matches = []
+    for mentor in mentors:
+        match_percent = calculate_match_percentage(current_user, mentor)
+        if match_percent > 0:
+            matches.append({
+                'mentor': mentor,
+                'match_percent': round(match_percent, 1)
+            })
+    
+    matches.sort(key=lambda x: x['match_percent'], reverse=True)
+    
+    return render_template('matches.html', matches=matches)
 
 @app.route('/dashboard')
 @login_required

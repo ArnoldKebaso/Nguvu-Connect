@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Matching Mentors</h2>
+    
+    {% if not matches %}
+    <div class="alert alert-info">
+        No mentors found matching your interests. Check back later!
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% for match in matches %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-primary text-white">
+                    {{ match.mentor.username }}
+                    <span class="badge bg-light text-primary float-end">
+                        {{ match.match_percent }}% Match
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if match.mentor.company %}
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {{ match.mentor.company }}
+                    </h6>
+                    {% endif %}
+                    
+                    {% if match.mentor.skills %}
+                    <div class="mb-3">
+                        <strong>Skills:</strong>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            {% for skill in match.mentor.skills.split(',') %}
+                            <span class="badge bg-secondary">{{ skill.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if match.mentor.bio %}
+                    <p class="card-text">{{ match.mentor.bio }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <button class="btn btn-outline-primary btn-sm cursor-pointer">
+                            
+                        <i class="bi bi-envelope"></i> Message
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
