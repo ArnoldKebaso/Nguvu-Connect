@@ -41,7 +41,7 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <p class="card-text">{{ goal.description }}</p>
-                        <small class="text-muted">Target: {{ goal.target_date|date_format }}</small>
+                        <small class="text-muted">Target: {{ goal.target_date }}</small>
                         <span class="badge bg-primary float-end">{{ goal.status }}</span>
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                 {% for session in sessions %}
                 <div class="card mb-2">
                     <div class="card-body">
-                        <h6 class="card-title">{{ session.scheduled_time|datetime_format }}</h6>
+                        <h6 class="card-title">{{ session.scheduled_time }}</h6>
                         <p class="card-text">{{ session.location }}</p>
                     </div>
                 </div>
