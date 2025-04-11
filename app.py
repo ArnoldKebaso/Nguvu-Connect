@@ -1,16 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 db = SQLAlchemy(app)
 
-# Database Models
-class User(db.Model):
+# Flask-Login setup
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -19,41 +22,62 @@ class User(db.Model):
     skills = db.Column(db.String(200))
     interests = db.Column(db.String(200))
     guidelines_accepted = db.Column(db.Boolean, default=False)
-class Goal(db.Model):  # New model
+
+class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mentee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     mentor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     description = db.Column(db.Text)
-    status = db.Column(db.String(20), default='Not Started')  # Not Started/In Progress/Completed
+    status = db.Column(db.String(20), default='Not Started')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     target_date = db.Column(db.DateTime)
-
 
 class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mentee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     mentor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    date = db.Column(db.String(50))
-    feedback = db.Column(db.Text)
     scheduled_time = db.Column(db.DateTime)
-    location = db.Column(db.String(200))  # e.g., Google Meet link
+    location = db.Column(db.String(200))
+    feedback = db.Column(db.Text)
     notification_sent = db.Column(db.Boolean, default=False)
+
 class Resource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50))  # 'course', 'article'
+    type = db.Column(db.String(50))
     skill_tag = db.Column(db.String(100))
     link = db.Column(db.String(200))
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Create tables
 with app.app_context():
     db.create_all()
 
-# -------------------  Home Route ------------------- 
 @app.route('/')
 def home():
-    return redirect(url_for('register'))
+    return redirect(url_for('login'))
 
-# -------------------  Registration Route ------------------- 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -61,35 +85,33 @@ def register():
         password = generate_password_hash(request.form['password'])
         role = request.form['role']
         
-        new_user = User(username=username, password=password, role=role)
+        new_user = User(
+            username=username,
+            password=password,
+            role=role
+        )
         db.session.add(new_user)
         db.session.commit()
-        
-        # Redirect to profile page WITH USER ID
-        return redirect(url_for('profile', user_id=new_user.id))
+        login_user(new_user)
+        return redirect(url_for('profile'))
     
     return render_template('register.html')
 
-# -------------------  Profile Route ------------------- 
-@app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
-def profile(user_id):
-    user = User.query.get(user_id)
-    
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
     if request.method == 'POST':
-        user.education = request.form['education']
-        user.skills = request.form['skills']
-        user.interests = request.form['interests']
+        current_user.education = request.form['education']
+        current_user.skills = request.form['skills']
+        current_user.interests = request.form['interests']
         db.session.commit()
-        return redirect(url_for('dashboard', user_id=user.id))
+        return redirect(url_for('dashboard'))
     
-    return render_template('profile.html', user=user)
+    return render_template('profile.html')
 
-# -------------------  Dashboard Route ------------------- 
-@app.route('/dashboard/<int:user_id>')
-def dashboard(user_id):
-    current_user = User.query.get(user_id)
-    
-    # Get mentorship guidelines
+@app.route('/dashboard')
+@login_required
+def dashboard():
     guidelines = [
         "Commit to regular meetings (at least bi-weekly)",
         "Set clear expectations and goals",
@@ -97,59 +119,58 @@ def dashboard(user_id):
         "Provide constructive feedback"
     ]
 
-    # Get goals
     goals = Goal.query.filter(
-        (Goal.mentee_id == user_id) | (Goal.mentor_id == user_id)
+        (Goal.mentee_id == current_user.id) | 
+        (Goal.mentor_id == current_user.id)
     ).all()
 
-    # Get upcoming sessions
     sessions = Session.query.filter(
-        (Session.mentee_id == user_id) | (Session.mentor_id == user_id),
+        (Session.mentee_id == current_user.id) | 
+        (Session.mentor_id == current_user.id),
         Session.scheduled_time > datetime.utcnow()
     ).order_by(Session.scheduled_time).all()
 
-    return render_template('dashboard.html', 
-                        user=current_user,
-                        guidelines=guidelines,
-                        goals=goals,
-                        sessions=sessions)
-    
-    
-# ------------------- New Goal Route -------------------
-@app.route('/goal/<int:user_id>', methods=['POST'])
-def create_goal(user_id):
-    current_user = User.query.get(user_id)
-    goal = Goal(
+    return render_template('dashboard.html',
+                         guidelines=guidelines,
+                         goals=goals,
+                         sessions=sessions)
+
+@app.route('/goal', methods=['POST'])
+@login_required
+def create_goal():
+    new_goal = Goal(
         mentee_id=current_user.id if current_user.role == 'mentee' else None,
         mentor_id=current_user.id if current_user.role == 'mentor' else None,
         description=request.form['description'],
         target_date=datetime.strptime(request.form['target_date'], '%Y-%m-%d')
     )
-    db.session.add(goal)
+    db.session.add(new_goal)
     db.session.commit()
-    return redirect(url_for('dashboard', user_id=user_id))
+    return redirect(url_for('dashboard'))
 
-# ------------------- New Session Route -------------------
-@app.route('/schedule/<int:user_id>', methods=['POST'])
-def schedule_session(user_id):
-    session = Session(
+@app.route('/schedule', methods=['POST'])
+@login_required
+def schedule_session():
+    new_session = Session(
         mentee_id=request.form['mentee_id'],
         mentor_id=request.form['mentor_id'],
         scheduled_time=datetime.strptime(request.form['datetime'], '%Y-%m-%dT%H:%M'),
         location=request.form['location']
     )
-    db.session.add(session)
+    db.session.add(new_session)
     db.session.commit()
-    return redirect(url_for('dashboard', user_id=user_id))
-# ------------------- Chatbot Route ------------------- 
+    return redirect(url_for('dashboard'))
+
 @app.route('/chatbot', methods=['POST'])
+@login_required
 def chatbot():
     user_message = request.form['message']
     responses = {
         "cv": "Check our CV template: <a href='/resources/1'>Download</a>",
-        "job": "Try these platforms: LinkedIn, BrighterMonday Kenya"
+        "job": "Try these platforms: LinkedIn, BrighterMonday Kenya",
+        "skills": "Recommended courses: Coursera, Udemy, and local tech hubs"
     }
-    return responses.get(user_message.lower(), "I’ll connect you to a mentor.")
+    return responses.get(user_message.lower(), "I'll connect you to a mentor.")
 
 if __name__ == '__main__':
     app.run(debug=True)

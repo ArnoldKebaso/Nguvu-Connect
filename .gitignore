@@ -1,0 +1,12 @@
+# Ignore virtual environment folders
+venv/
+.env/
+*/venv/
+*/.env/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+# Ignore Node.js modules
+node_modules/
+*/node_modules/
