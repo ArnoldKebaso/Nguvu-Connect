@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-section">
+    <h2>Mentorship Guidelines</h2>
+    <ul>
+        {% for guideline in guidelines %}
+        <li>{{ guideline }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="dashboard-section">
+    <h2>Set Goals</h2>
+    <form method="POST" action="/goal/{{ user.id }}">
+        <textarea name="description" placeholder="Goal description"></textarea>
+        <input type="date" name="target_date" required>
+        <button type="submit">Set Goal</button>
+    </form>
+
+    <h3>Current Goals</h3>
+    {% for goal in goals %}
+    <div class="goal">
+        <p>{{ goal.description }} - {{ goal.status }}</p>
+        <small>Target: {{ goal.target_date|date_format }}</small>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="dashboard-section">
+    <h2>Schedule Session</h2>
+    <form method="POST" action="/schedule/{{ user.id }}">
+        <input type="datetime-local" name="datetime" required>
+        <input type="text" name="location" placeholder="Meeting location/link">
+        <input type="hidden" name="mentor_id" value="{{ mentors[0].id if user.role == 'mentee' else user.id }}">
+        <input type="hidden" name="mentee_id" value="{{ user.id if user.role == 'mentee' else mentors[0].id }}">
+        <button type="submit">Schedule</button>
+    </form>
+
+    <h3>Upcoming Sessions</h3>
+    {% for session in sessions %}
+    <div class="session">
+        <p>{{ session.scheduled_time|datetime_format }} - {{ session.location }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

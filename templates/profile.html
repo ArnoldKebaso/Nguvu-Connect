@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Complete Your Profile</h2>
+<form method="POST">
+  <input type="text" name="education" placeholder="Education (e.g., BSc Computer Science)">
+  <input type="text" name="skills" placeholder="Skills (e.g., Python, Farming)">
+  <input type="text" name="interests" placeholder="Interests (e.g., Data Science)">
+  <button type="submit">Save</button>
+</form>
+{% endblock %}
