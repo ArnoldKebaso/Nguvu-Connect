@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 # Initialize DialoGPT components
 tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
 model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
-
+        
 # Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
