@@ -8,6 +8,7 @@
         </div>
         <div class="card-body">
             <form method="POST">
+                {% if current_user.role == 'mentor' %}  <!-- Fixed role check -->
                 <!-- Education Field -->
                 <div class="mb-3">
                     <label class="form-label">Education Background</label>
@@ -28,6 +29,16 @@
                     <textarea class="form-control" name="bio" rows="3"
                               placeholder="Describe your professional background">{{ current_user.bio or '' }}</textarea>
                 </div>
+                {% endif %}
+
+                <!-- Add this section before interests -->
+<div class="mb-3">
+    <label class="form-label">Your Skills (comma separated)</label>
+    <input type="text" class="form-control" name="skills" 
+           value="{{ current_user.skills or '' }}"
+           placeholder="Example: Python, JavaScript, Project Management">
+    <small class="text-muted">Separate multiple skills with commas</small>
+</div>
 
                 <!-- Interests Multi-Select -->
                 <div class="mb-4">

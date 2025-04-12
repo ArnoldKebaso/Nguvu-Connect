@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}NguvuConnect - Empower Your Growth{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                    url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+        background-size: cover;
+        background-position: center;
+        height: 80vh;
+        color: white;
+    }
+    .feature-icon {
+        font-size: 3rem;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-people-fill me-2"></i>NguvuConnect
+        </a>
+        <div class="navbar-nav">
+            <a class="nav-link" href="{{ url_for('login') }}">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Login
+            </a>
+            <a class="nav-link" href="{{ url_for('register') }}">
+                <i class="bi bi-person-plus me-1"></i>Register
+            </a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section d-flex align-items-center">
+    <div class="container text-center">
+        <h1 class="display-4 mb-4">Empower Your Professional Journey</h1>
+        <p class="lead mb-4">Connect with experienced mentors and ambitious mentees in your field</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
+        </div>
+    </div>
+</div>
+
+<section id="features" class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4">
+                    <i class="feature-icon bi bi-people"></i>
+                    <h3 class="my-3">Smart Matching</h3>
+                    <p>Connect with ideal mentors/mentees based on skills and interests</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4">
+                    <i class="feature-icon bi bi-graph-up"></i>
+                    <h3 class="my-3">Career Growth</h3>
+                    <p>Access resources and guidance to accelerate your development</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4">
+                    <i class="feature-icon bi bi-chat-dots"></i>
+                    <h3 class="my-3">Community Support</h3>
+                    <p>Join a network of professionals committed to mutual success</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block footer %}
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container text-center">
+        <div class="social-links mb-3">
+            <a href="#" class="text-white mx-2"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="text-white mx-2"><i class="bi bi-linkedin"></i></a>
+            <a href="#" class="text-white mx-2"><i class="bi bi-instagram"></i></a>
+        </div>
+        <p class="mb-0">&copy; 2023 NguvuConnect. All rights reserved.</p>
+    </div>
+</footer>
+{% endblock %}

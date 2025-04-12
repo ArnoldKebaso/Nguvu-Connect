@@ -1,12 +1,36 @@
-# Ignore virtual environment folders
+# Virtual environment folders
 venv/
 .env/
 */venv/
 */.env/
 
-# Ignore Python cache files
+# Python cache files and compiled bytecode
 __pycache__/
 *.pyc
-# Ignore Node.js modules
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Distribution / packaging
+build/
+dist/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Node.js modules
 node_modules/
 */node_modules/
+
+# IDE / Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
