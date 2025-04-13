@@ -1,20 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 db = SQLAlchemy(app)
 
-# Initialize DialoGPT components
-tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
-model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
-        
 # Flask-Login setup
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -62,46 +57,29 @@ class Session(db.Model):
     feedback = db.Column(db.Text)
     notification_sent = db.Column(db.Boolean, default=False)
 
+class Resource(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50))
+    skill_tag = db.Column(db.String(100))
+    link = db.Column(db.String(200))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 def seed_interests():
     default_interests = [
-    # Tech/Digital
-    'M-Pesa Integration', 
-    'Solar Energy Tech',
-    'E-Government Services',
-    'Digital Content Creation',
-    
-    # Agriculture & Related
-    'Agritech Solutions',
-    'Organic Certification',
-    'Hydroponics',
-    
-    # Creative/Cultural
-    'Creative Arts',
-    'Cultural Heritage Preservation',
-    'Eco-Tourism',
-    
-    # Business/Development
-    'Social Entrepreneurship',
-    'Community Development',
-    'Informal Sector Finance',
-    
-    # Emerging Sectors
-    'Boda Boda Logistics',
-    'E-Waste Recycling',
-    'Swahili Tech Localization'
+        'Data Science', 'AI/ML', 'Web Development',
+        'Mobile Development', 'Cloud Computing', 'Cybersecurity',
+        'UI/UX Design', 'Project Management', 'Digital Marketing'
     ]
     for interest in default_interests:
         if not Interest.query.filter_by(name=interest).first():
             db.session.add(Interest(name=interest))
     db.session.commit()
 
-# Create tables and seed interests
+# Create tables
 with app.app_context():
-    db.drop_all()
     db.create_all()
     seed_interests()
 
@@ -116,21 +94,6 @@ def calculate_match_percentage(mentee, mentor):
         return 0
     
     return (len(common_interests) / total_mentee_interests) * 100
-
-def get_recommended_courses():
-    skills = current_user.skills.split(',') if current_user.skills else []
-    courses = {
-        'farming': 'AgriTech Basics on Udemy',
-        'tech': 'Python Fundamentals on Coursera',
-        'marketing': 'Digital Marketing Certification'
-    }
-    return "\n".join([courses.get(skill.strip().lower(), "Basic Computer Skills") for skill in skills][:3])
-
-def get_mentor_matches():
-    if current_user.role != 'mentee':
-        return "Available for mentees only"
-    matches = User.query.filter_by(role='mentor').limit(3).all()
-    return "\n".join([f"{m.username} ({', '.join([i.name for i in m.interests][:2])})" for m in matches])
 
 @app.route('/')
 def home():
@@ -180,9 +143,11 @@ def profile():
     all_interests = Interest.query.all()
     
     if request.method == 'POST':
-        current_user.education = request.form.get('education', '')
-        current_user.company = request.form.get('company', '')
-        current_user.bio = request.form.get('bio', '')
+        if current_user.role == 'mentor':
+            current_user.education = request.form.get('education', '')
+            current_user.company = request.form.get('company', '')
+            current_user.bio = request.form.get('bio', '')
+        
         current_user.skills = request.form.get('skills', '')
         
         selected_interest_ids = request.form.getlist('interests')
@@ -192,6 +157,9 @@ def profile():
         
         db.session.commit()
         flash('Profile updated successfully!')
+        
+        if current_user.role == 'mentee':
+            return redirect(url_for('matches'))
         return redirect(url_for('dashboard'))
     
     return render_template('profile.html', all_interests=all_interests)
@@ -203,6 +171,7 @@ def matches():
         return redirect(url_for('dashboard'))
     
     mentors = User.query.filter_by(role='mentor').all()
+    
     matches = []
     for mentor in mentors:
         match_percent = calculate_match_percentage(current_user, mentor)
@@ -213,6 +182,7 @@ def matches():
             })
     
     matches.sort(key=lambda x: x['match_percent'], reverse=True)
+    
     return render_template('matches.html', matches=matches)
 
 @app.route('/dashboard')
@@ -239,8 +209,7 @@ def dashboard():
     return render_template('dashboard.html',
                          guidelines=guidelines,
                          goals=goals,
-                         sessions=sessions,
-                         chat_history=session.get('chat_history', []))
+                         sessions=sessions)
 
 @app.route('/goal', methods=['POST'])
 @login_required
@@ -272,45 +241,12 @@ def schedule_session():
 @login_required
 def chatbot():
     user_message = request.form['message']
-    chat_history = session.get('chat_history', [])
-    
-    local_responses = {
-        "cv": "**CV Writing Tips**:\n1. Include KCSE/KCGF certificate numbers\n2. Highlight M-Pesa experience\n3. Mention iTax familiarity\n4. Add vocational training",
-        "job": "**Job Platforms**:\n- BrighterMonday\n- MyJobMag\n- County Portals\n- Jijiji Kenya",
-        "mentor": get_mentor_matches(),
-        "skills": f"**Your Skills**: {current_user.skills}\n**Recommended Courses**:\n{get_recommended_courses()}",
-        "interview": "**Interview Tips**:\n1. Research companies\n2. Practice questions\n3. Professional attire\n4. Send thank you emails"
+    responses = {
+        "cv": "Check our CV template: <a href='/resources/1'>Download</a>",
+        "job": "Try these platforms: LinkedIn, BrighterMonday Kenya",
+        "skills": "Recommended courses: Coursera, Udemy, and local tech hubs"
     }
-    
-    response = None
-    for key in local_responses:
-        if key in user_message.lower():
-            response = local_responses[key]
-            break
-
-    if not response:
-        try:
-            inputs = tokenizer.encode(
-                f"{user_message}{tokenizer.eos_token}",
-                return_tensors='pt',
-                max_length=1000,
-                truncation=True
-            )
-            outputs = model.generate(
-                inputs,
-                max_length=1000,
-                temperature=0.7,
-                top_k=40,
-                top_p=0.85
-            )
-            response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        except Exception as e:
-            response = "I'm having trouble responding. Please try again later."
-
-    chat_history.append({"user": user_message, "bot": response})
-    session['chat_history'] = chat_history[-5:]
-    
-    return redirect(url_for('dashboard'))
+    return responses.get(user_message.lower(), "I'll connect you to a mentor.")
 
 if __name__ == '__main__':
     app.run(debug=True)
