@@ -1,0 +1,25 @@
+{% macro form_input(name,
+                    type='text',
+                    value='',
+                    placeholder='',
+                    label=None,
+                    required=False,
+                    extra_classes='') %}
+  <div class="mb-4">
+    {% if label %}
+      <label for="{{ name }}"
+             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        {{ label }}
+      </label>
+    {% endif %}
+    <input
+      type="{{ type }}"
+      name="{{ name }}"
+      id="{{ name }}"
+      value="{{ value }}"
+      placeholder="{{ placeholder }}"
+      class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
+             rounded-md shadow-sm focus:outline-none focus:ring focus:ring-primary-light {{ extra_classes }}"
+      {% if required %}required{% endif %}>
+  </div>
+{% endmacro %}

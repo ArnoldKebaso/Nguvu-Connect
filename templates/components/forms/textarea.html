@@ -1,0 +1,24 @@
+{% macro form_textarea(name,
+                       value='',
+                       rows=3,
+                       placeholder='',
+                       label=None,
+                       required=False,
+                       extra_classes='') %}
+  <div class="mb-4">
+    {% if label %}
+      <label for="{{ name }}"
+             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        {{ label }}
+      </label>
+    {% endif %}
+    <textarea
+      name="{{ name }}"
+      id="{{ name }}"
+      rows="{{ rows }}"
+      placeholder="{{ placeholder }}"
+      class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
+             rounded-md shadow-sm focus:outline-none focus:ring focus:ring-primary-light {{ extra_classes }}"
+      {% if required %}required{% endif %}>{{ value }}</textarea>
+  </div>
+{% endmacro %}
