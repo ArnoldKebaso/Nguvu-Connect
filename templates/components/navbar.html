@@ -1,0 +1,111 @@
+<nav class="bg-white dark:bg-gray-800 shadow">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- Logo / Brand -->
+      <div class="flex-shrink-0 flex items-center">
+        <a href="{{ url_for('home') }}"
+           class="text-2xl font-bold text-primary dark:text-primary-light">
+          NguvuConnect
+        </a>
+      </div>
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex md:space-x-6 md:items-center">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('dashboard') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Dashboard
+          </a>
+          <a href="{{ url_for('matches') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Matches
+          </a>
+          <a href="{{ url_for('profile') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Profile
+          </a>
+          <a href="{{ url_for('logout') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Logout
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Login
+          </a>
+          <a href="{{ url_for('register') }}"
+             class="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white">
+             Register
+          </a>
+        {% endif %}
+        <!-- Dark Mode Toggle -->
+        <button id="dark-toggle" aria-label="Toggle dark mode"
+                class="ml-4 p-1 rounded focus:outline-none focus:ring">
+          🌓
+        </button>
+      </div>
+      <!-- Mobile Hamburger -->
+      <div class="flex items-center md:hidden">
+        <button id="mobile-menu-button" aria-label="Open main menu"
+                class="p-2 rounded focus:outline-none focus:ring">
+          <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none"
+               stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="md:hidden hidden bg-white dark:bg-gray-800">
+    <div class="pt-2 pb-4 space-y-1 px-2">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Dashboard
+        </a>
+        <a href="{{ url_for('matches') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Matches
+        </a>
+        <a href="{{ url_for('profile') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Profile
+        </a>
+        <a href="{{ url_for('logout') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Logout
+        </a>
+      {% else %}
+        <a href="{{ url_for('login') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Login
+        </a>
+        <a href="{{ url_for('register') }}"
+           class="block px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+           Register
+        </a>
+      {% endif %}
+      <!-- Dark Mode in Mobile -->
+      <button id="dark-toggle-mobile" aria-label="Toggle dark mode"
+              class="mt-2 w-full text-left px-3 py-2 rounded text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+        🌓 Dark Mode
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-button').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+    // Dark mode toggle (desktop & mobile)
+    const toggleFns = ['dark-toggle','dark-toggle-mobile'].map(id => () => {
+      document.documentElement.classList.toggle('dark');
+    });
+    document.getElementById('dark-toggle')
+      .addEventListener('click', toggleFns[0]);
+    document.getElementById('dark-toggle-mobile')
+      .addEventListener('click', toggleFns[1]);
+  </script>
+</nav>

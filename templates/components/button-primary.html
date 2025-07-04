@@ -1,0 +1,15 @@
+{% macro button_primary(href=None, type='button', extra_classes='') %}
+  {% if href %}
+    <a href="{{ href }}"
+       class="inline-block px-5 py-2 bg-primary text-white font-medium
+              rounded hover:bg-primary-light focus:outline-none {{ extra_classes }}">
+      {{ caller() }}
+    </a>
+  {% else %}
+    <button type="{{ type }}"
+            class="inline-block px-5 py-2 bg-primary text-white font-medium
+                   rounded hover:bg-primary-light focus:outline-none {{ extra_classes }}">
+      {{ caller() }}
+    </button>
+  {% endif %}
+{% endmacro %}

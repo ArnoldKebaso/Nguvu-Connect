@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard • NguvuConnect{% endblock %}
+{% from 'components/card.html' import card %}
+{% from 'components/button-primary.html' import button_primary %}
+{% from 'components/icon.html' import icon %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+  <!-- Top Row: Guidelines, Goals, Sessions -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Mentorship Guidelines -->
+    {% call card %}
+      <div class="flex items-center mb-3">
+        {{ icon('check', 'w-5 h-5 text-green-500 mr-2') }}
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Mentorship Guidelines
+        </h3>
+      </div>
+      <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        {% for guideline in guidelines %}
+          <li>{{ guideline }}</li>
+        {% endfor %}
+      </ol>
+    {% endcall %}
+
+    <!-- Goal Management -->
+    {% call card %}
+      <div class="flex items-center mb-3">
+        {{ icon('check', 'w-5 h-5 text-blue-500 mr-2') }}
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Goal Management
+        </h3>
+      </div>
+      <form method="POST" action="{{ url_for('create_goal') }}" class="space-y-3">
+        <textarea name="description" rows="2" placeholder="Goal description" required
+                  class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-md focus:ring focus:ring-blue-400"></textarea>
+        <input type="date" name="target_date" required
+               class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-md focus:ring focus:ring-blue-400">
+        {% call button_primary(type='submit', extra_classes='w-full') %}Set Goal{% endcall %}
+      </form>
+      <hr class="my-4 border-gray-200 dark:border-gray-700">
+      <h4 class="text-md font-medium text-gray-800 dark:text-gray-100 mb-2">Current Goals</h4>
+      <div class="space-y-2 text-sm">
+        {% for goal in goals %}
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-gray-700 dark:text-gray-300">{{ goal.description }}</p>
+              <small class="text-gray-500 dark:text-gray-400">
+                Target: {{ goal.target_date.strftime('%Y-%m-%d') }}
+              </small>
+            </div>
+            <span class="px-2 py-1 text-xs font-semibold text-white rounded
+                         {{ 'bg-green-500' if goal.status=='Completed' else 'bg-gray-500' }}">
+              {{ goal.status }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endcall %}
+
+    <!-- Session Scheduling (Mentors Only) -->
+    {% if current_user.role == 'mentor' %}
+      {% call card %}
+        <div class="flex items-center mb-3">
+          {{ icon('calendar', 'w-5 h-5 text-yellow-500 mr-2') }}
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            Schedule Session
+          </h3>
+        </div>
+        <form method="POST" action="{{ url_for('schedule_session') }}" class="space-y-3">
+          <input type="hidden" name="mentee_id" value="{{ current_user.id }}">
+          <input type="hidden" name="mentor_id" value="{{ current_user.id }}">
+          <input type="datetime-local" name="datetime" required
+                 class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-md focus:ring focus:ring-yellow-400">
+          <input type="text" name="location" placeholder="Link / Location" required
+                 class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-md focus:ring focus:ring-yellow-400">
+          {% call button_primary(type='submit', extra_classes='w-full bg-yellow-500 hover:bg-yellow-600') %}
+            Schedule
+          {% endcall %}
+        </form>
+        <hr class="my-4 border-gray-200 dark:border-gray-700">
+        <h4 class="text-md font-medium text-gray-800 dark:text-gray-100 mb-2">
+          Upcoming Sessions
+        </h4>
+        <div class="space-y-2 text-sm">
+          {% for session in sessions %}
+            <div>
+              <h5 class="font-medium text-gray-800 dark:text-gray-100">
+                {{ session.scheduled_time.strftime('%Y-%m-%d %H:%M') }}
+              </h5>
+              <p class="text-gray-600 dark:text-gray-400">{{ session.location }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endcall %}
+    {% endif %}
+  </div>
+
+  <!-- Bottom Row: Skills & AI Assistant -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Skills & Expertise -->
+    {% call card %}
+      <div class="flex items-center mb-3">
+        {{ icon('check', 'w-5 h-5 text-green-400 mr-2') }}
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Skills & Expertise
+        </h3>
+      </div>
+      {% if current_user.skills %}
+        <div class="flex flex-wrap gap-2">
+          {% for skill in current_user.skills.split(',') %}
+            <span class="text-xs bg-green-200 dark:bg-green-700 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+              {{ skill.strip() }}
+            </span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+          No skills listed yet. Update your profile to add skills.
+        </p>
+      {% endif %}
+    {% endcall %}
+
+    <!-- AI Career Assistant -->
+    {% call card %}
+      <div class="flex items-center mb-3">
+        {{ icon('chat', 'w-5 h-5 text-blue-500 mr-2') }}
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          AI Career Assistant
+        </h3>
+      </div>
+      <form method="POST" action="{{ url_for('chatbot') }}" class="flex">
+        <input type="text" name="message" placeholder="Ask me anything about careers..."
+               class="flex-1 px-3 py-2 bg-white dark:bg-gray-700 border rounded-l-md focus:ring focus:ring-blue-400">
+        <button type="submit"
+                class="px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-r-md">
+          Ask
+        </button>
+      </form>
+      {% if chatbot_response %}
+        <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-800 dark:text-gray-200">
+          {{ chatbot_response|safe }}
+        </div>
+      {% endif %}
+    {% endcall %}
+  </div>
+</div>
+{% endblock %}

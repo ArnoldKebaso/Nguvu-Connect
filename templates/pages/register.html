@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% from 'components/forms/input.html'    import form_input %}
+{% from 'components/forms/select.html'   import form_select %}
+{% from 'components/button-primary.html' import button_primary %}
+
+{% block title %}Register • NguvuConnect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+  <div class="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+      Create Your Account
+    </h2>
+    <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+      {{ form_input('username',
+                    placeholder='Choose a username',
+                    label='Username',
+                    required=True) }}
+      {{ form_input('password',
+                    type='password',
+                    placeholder='Choose a password',
+                    label='Password',
+                    required=True) }}
+      {{ form_select('role',
+                     options=[
+                       {'value':'mentee','label':'Mentee'},
+                       {'value':'mentor','label':'Mentor'}
+                     ],
+                     selected=None,
+                     label='Register as',
+                     required=True) }}
+
+      {% call button_primary(type='submit', extra_classes='w-full') %}
+        Register
+      {% endcall %}
+    </form>
+    <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
+      Already have an account?
+      <a href="{{ url_for('login') }}" class="text-primary hover:underline">
+        Login here
+      </a>
+    </p>
+  </div>
+</div>
+{% endblock %}

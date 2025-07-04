@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Complete Your Profile</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% if current_user.role == 'mentor' %}  <!-- Fixed role check -->
+                <!-- Education Field -->
+                <div class="mb-3">
+                    <label class="form-label">Education Background</label>
+                    <input type="text" class="form-control" name="education" 
+                           value="{{ current_user.education or '' }}">
+                </div>
+
+                <!-- Company/Organization -->
+                <div class="mb-3">
+                    <label class="form-label">Current Company/Organization</label>
+                    <input type="text" class="form-control" name="company"
+                           value="{{ current_user.company or '' }}">
+                </div>
+
+                <!-- Bio -->
+                <div class="mb-3">
+                    <label class="form-label">Professional Bio</label>
+                    <textarea class="form-control" name="bio" rows="3"
+                              placeholder="Describe your professional background">{{ current_user.bio or '' }}</textarea>
+                </div>
+                {% endif %}
+
+                <!-- Add this section before interests -->
+<div class="mb-3">
+    <label class="form-label">Your Skills (comma separated)</label>
+    <input type="text" class="form-control" name="skills" 
+           value="{{ current_user.skills or '' }}"
+           placeholder="Example: Python, JavaScript, Project Management">
+    <small class="text-muted">Separate multiple skills with commas</small>
+</div>
+
+                <!-- Interests Multi-Select -->
+                <div class="mb-4">
+                    <label class="form-label">Select Your Interests/Skills</label>
+                    <select class="form-select" name="interests" multiple size="5" 
+                            style="height: 150px;" required>
+                        {% for interest in all_interests %}
+                        <option value="{{ interest.id }}" 
+                                {% if interest in current_user.interests %}selected{% endif %}>
+                            {{ interest.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Hold CTRL/CMD to select multiple</small>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-save me-2"></i>Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

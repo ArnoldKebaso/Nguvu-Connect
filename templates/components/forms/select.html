@@ -1,0 +1,37 @@
+{% macro form_select(name,
+                     options,
+                     selected=None,
+                     multiple=False,
+                     label=None,
+                     required=False,
+                     extra_classes='') %}
+  <div class="mb-4">
+    {% if label %}
+      <label for="{{ name }}"
+             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        {{ label }}
+      </label>
+    {% endif %}
+    <select
+      name="{{ name }}"
+      id="{{ name }}"
+      class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
+             rounded-md shadow-sm focus:outline-none focus:ring focus:ring-primary-light {{ extra_classes }}"
+      {% if multiple %}multiple size="5"{% endif %}
+      {% if required %}required{% endif %}>
+      {% for opt in options %}
+        {% if multiple %}
+          <option value="{{ opt.value }}"
+                  {% if selected and (opt.value in selected) %}selected{% endif %}>
+            {{ opt.label }}
+          </option>
+        {% else %}
+          <option value="{{ opt.value }}"
+                  {% if selected is not none and opt.value == selected %}selected{% endif %}>
+            {{ opt.label }}
+          </option>
+        {% endif %}
+      {% endfor %}
+    </select>
+  </div>
+{% endmacro %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Mentor Matches • NguvuConnect{% endblock %}
+{% from 'components/card.html' import card %}
+{% from 'components/button-primary.html' import button_primary %}
+{% from 'components/icon.html' import icon %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+    Matching Mentors
+  </h2>
+
+  {% if not matches %}
+    <div class="bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 text-blue-800 dark:text-gray-200 px-6 py-4 rounded">
+      No mentors found matching your interests. Check back later!
+    </div>
+  {% else %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for match in matches %}
+        {% call card %}
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100">
+              {{ match.mentor.username }}
+            </h3>
+            <span class="text-sm font-semibold text-white bg-primary px-2 py-1 rounded">
+              {{ match.match_percent }}%
+            </span>
+          </div>
+          {% if match.mentor.company %}
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              {{ match.mentor.company }}
+            </p>
+          {% endif %}
+          {% if match.mentor.skills %}
+            <div class="flex flex-wrap gap-2 mb-2">
+              {% for skill in match.mentor.skills.split(',') %}
+                <span class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
+                  {{ skill.strip() }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if match.mentor.bio %}
+            <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              {{ match.mentor.bio }}
+            </p>
+          {% endif %}
+          <div class="flex justify-end">
+            {% call button_primary(type='button', extra_classes='border border-primary text-primary hover:bg-primary-light hover:text-white') %}
+              {{ icon('chat', 'w-4 h-4 inline mr-1') }} Message
+            {% endcall %}
+          </div>
+        {% endcall %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
