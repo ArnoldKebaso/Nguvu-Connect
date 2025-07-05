@@ -26,34 +26,30 @@
   <!-- Footer -->
   {% include 'components/footer.html' %}
 
-  <!-- Dark mode persistence & mobile menu scripts -->
+  <!-- Dark mode & mobile-menu scripts -->
   <script>
-    // Initialize dark mode based on preference or saved setting
+    // Initialize dark mode from localStorage or system
     if (
       localStorage.theme === 'dark' ||
       (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
     ) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add('dark')
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('dark')
     }
 
-    // Toggle dark mode and save preference
-    document.querySelectorAll('#dark-toggle, #dark-toggle-mobile').forEach(btn => {
+    // Toggle dark mode
+    document.querySelectorAll('#dark-toggle, #dark-toggle-mobile').forEach(btn =>
       btn.addEventListener('click', () => {
-        document.documentElement.classList.toggle('dark');
-        if (document.documentElement.classList.contains('dark')) {
-          localStorage.theme = 'dark';
-        } else {
-          localStorage.theme = 'light';
-        }
-      });
-    });
+        document.documentElement.classList.toggle('dark')
+        localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+      })
+    )
 
-    // Mobile menu
+    // Mobile menu toggle
     document.getElementById('mobile-menu-button').addEventListener('click', () => {
-      document.getElementById('mobile-menu').classList.toggle('hidden');
-    });
+      document.getElementById('mobile-menu').classList.toggle('hidden')
+    })
   </script>
 </body>
 </html>
